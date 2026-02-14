@@ -1,0 +1,293 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+    <title>SafeGuardAI - HSE Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/css/tabler-vendors.min.css" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+    <link href="{% static 'design.css' %}" rel="stylesheet">
+</head>
+<body>
+    <div class="page">
+        <header class="navbar navbar-expand-md navbar-light d-print-none navbar-top">
+            <div class="page-content w-100">
+                <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal mb-0">
+                    <span class="logo-text">SafeGuardAI</span>
+                </h1>
+                <div class="navbar-nav flex-row order-md-last align-items-center">
+                    <div class="nav-item dropdown">
+                        <a href="#" class="nav-link p-0 text-reset d-flex align-items-center" data-bs-toggle="dropdown">
+                            <span class="nav-user-block">
+                                <span class="avatar avatar-sm bg-primary text-white me-2">H</span>
+                                <span class="d-none d-xl-inline text-start">
+                                    <span class="user-label d-block">HSE Officer</span>
+                                    <span class="user-role d-block text-muted">Admin</span>
+                                </span>
+                            </span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end shadow-sm">
+                            <span class="dropdown-item text-muted small">Signed in as Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="page-wrapper">
+            <div class="page-header d-print-none">
+                <div class="page-content">
+                    <div class="row g-3 align-items-center justify-content-between">
+                        <div class="col-auto">
+                            <h2 class="page-title">Dashboard</h2>
+                            <div class="text-muted mt-1">Overview of safety activity and worker engagement</div>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-list">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#upload-modal" aria-label="Upload safety document">Upload Document</button>
+                                <button type="button" class="btn btn-outline-primary" onclick="exportToCSV(); return false;" aria-label="Export conversations to CSV">Export Report (CSV)</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-body">
+                <div class="page-content">
+                    <div id="page-success-toast" class="alert alert-success alert-dismissible fade show d-none mb-4" role="alert">
+                        <span class="toast-message"></span>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" onclick="document.getElementById('page-success-toast').classList.add('d-none')"></button>
+                    </div>
+                    <section class="dashboard-section">
+                        <h2 class="dashboard-section-title">Overview</h2>
+                        <div class="row g-5 stats-cards">
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <span class="stat-label d-block">Chats with workers</span>
+                                        <div class="stat-value" id="total-conversations">0</div>
+                                        <div class="stat-meta text-muted">Last 7 days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <span class="stat-label d-block">Safety questions answered</span>
+                                        <div class="stat-value" id="total-safety-queries">0</div>
+                                        <div class="stat-meta text-muted">Total so far</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <span class="stat-label d-block">Workers who asked</span>
+                                        <div class="stat-value" id="active-users">0</div>
+                                        <div class="stat-meta text-muted">Last 7 days</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-xl-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <span class="stat-label d-block">Safety guides</span>
+                                        <div class="stat-value" id="total-documents">0</div>
+                                        <div class="stat-meta text-muted">Available for answers</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row g-5">
+                            <div class="col-lg-6">
+                                <div class="card chart-card h-100">
+                                    <div class="card-header">
+                                        <h3 class="card-title mb-1">Which safety guides are used most</h3>
+                                        <p class="chart-subtitle text-muted mb-0">Safety guides referenced most often when answering workers' questions.</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container chart-container-lg">
+                                            <canvas id="topTopicsChart" height="320"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="card chart-card h-100">
+                                    <div class="card-header">
+                                        <h3 class="card-title mb-1">Chats per day</h3>
+                                        <p class="chart-subtitle text-muted mb-0">Daily number of conversations between workers and the assistant over the last 7 days.</p>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="chart-container chart-container-lg">
+                                            <canvas id="conversationsTrendChart" height="320"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="dashboard-section">
+                        <h2 class="dashboard-section-title">Guide usage</h2>
+                        <div class="row g-5">
+                            <div class="col-12 col-lg-6">
+                                <div class="card section-card h-100">
+                                    <div class="card-header">
+                                        <h3 class="card-title mb-0">How often each guide is used</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-scroll-wrap">
+                                            <table class="table card-table table-vcenter data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Guide name</th>
+                                                        <th>Times used</th>
+                                                        <th>Share</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="documents-stats">
+                                                    <tr><td colspan="3" class="empty-cell">Loading…</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="card section-card h-100">
+                                    <div class="card-header">
+                                        <h3 class="card-title mb-0">Safety guides</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-scroll-wrap">
+                                            <table class="table card-table table-vcenter data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Guide name</th>
+                                                        <th>Added on</th>
+                                                        <th>Times used</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="documents-table">
+                                                    <tr><td colspan="4" class="empty-cell">Loading…</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="dashboard-section">
+                        <h2 class="dashboard-section-title">Recent activity</h2>
+                        <div class="row g-5">
+                            <div class="col-12 col-lg-6">
+                                <div class="card section-card h-100">
+                                    <div class="card-header">
+                                        <h3 class="card-title mb-0">Recent chats</h3>
+                                        <div class="filter-bar ms-auto">
+                                            <div class="dropdown filter-dropdown">
+                                                <button type="button" class="btn dropdown-toggle filter-toggle" data-bs-toggle="dropdown" id="conversation-type-btn" aria-haspopup="true" aria-expanded="false">All types</button>
+                                                <div class="dropdown-menu dropdown-menu-end">
+                                                    <a class="dropdown-item filter-option-type active" href="#" data-value="">All types</a>
+                                                    <a class="dropdown-item filter-option-type" href="#" data-value="text">Text</a>
+                                                    <a class="dropdown-item filter-option-type" href="#" data-value="voice">Voice</a>
+                                                </div>
+                                            </div>
+                                            <input type="text" id="conversation-search" class="form-control form-control-sm filter-input" placeholder="Search…">
+                                            <span class="result-count" id="conversations-result-count">—</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-scroll-wrap">
+                                            <table class="table card-table table-vcenter data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Time</th>
+                                                        <th>Worker</th>
+                                                        <th>Message</th>
+                                                        <th>Type</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="conversations-table">
+                                                    <tr><td colspan="4" class="empty-cell">Loading…</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6">
+                                <div class="card section-card h-100">
+                                    <div class="card-header">
+                                        <h3 class="card-title mb-0">Recent safety answers</h3>
+                                        <span class="result-count ms-auto" id="safety-logs-result-count">—</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-scroll-wrap">
+                                            <table class="table card-table table-vcenter data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Time</th>
+                                                        <th>Worker</th>
+                                                        <th>Question</th>
+                                                        <th>Guide(s) used</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="safety-logs-table">
+                                                    <tr><td colspan="4" class="empty-cell">Loading…</td></tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal modal-blur fade" id="upload-modal" tabindex="-1" role="dialog" aria-labelledby="upload-modal-title" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="upload-modal-title">Add a safety guide</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-4">Upload a safety manual or procedure as plain text. It will be available for the assistant to use when answering workers.</p>
+                    <form id="upload-form">
+                        <div class="mb-4">
+                            <label class="form-label required" for="doc-title">Guide name</label>
+                            <input type="text" class="form-control" id="doc-title" placeholder="e.g. Fall protection guidelines" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label required" for="doc-file">File</label>
+                            <input type="file" class="form-control" id="doc-file" accept=".txt" required>
+                            <small class="form-hint text-muted d-block mt-1">Plain text (.txt) only. The guide will be added to the answer system automatically.</small>
+                        </div>
+                        <div id="upload-doc-message" class="alert d-none mb-0" role="alert"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="upload-doc-submit" onclick="uploadDocument()">Upload</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.4.0/dist/js/tabler.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="{% static 'logic.js' %}"></script>
+</body>
+</html>
