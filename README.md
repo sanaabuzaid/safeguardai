@@ -663,8 +663,8 @@ MIT License - See LICENSE file for details.
 
 **Sana Abu Zaid**
 
+Email: sanaabuzaid02@gmail.com  
 GitHub: [@sanaabuzaid](https://github.com/sanaabuzaid)
-Email: sanaabuzaid02@gmail.com
 
 ---
 
